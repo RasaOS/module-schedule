@@ -1,0 +1,118 @@
+# Schedule-Gate
+
+**This file is yours.** `rasa.module.schedule` ships the portable
+bookings-as-records spine (`.claude/schedule-rules.md` + the `/book`,
+`/schedule`, `/remind` skills), but it deliberately does not decide the four
+things that vary per project:
+
+1. **Working hours** — when bookings normally fall,
+2. **Timezone** — what a bare datetime means here,
+3. **Booking types** — your `type` vocabulary, and
+4. **Reminder policy** — default lead times + how a reminder is meant to fire.
+
+This file is where you define all four. The skills read it: `/book` prompts
+from your type list and stamps your timezone; `/remind` honors your reminder
+policy. Fill in the sections below — honest defaults are shown; replace them.
+
+---
+
+## working_hours (EDIT THIS)
+
+The hours bookings normally fall within. Informational — the module does not
+enforce them, but `/book` and a human reviewer use them to flag a booking
+that lands outside normal hours.
+
+```
+working_hours:
+  # days:  Mon–Fri
+  # start: 09:00
+  # end:   17:00
+```
+
+---
+
+## timezone (EDIT THIS)
+
+The default timezone for bookings that don't carry an explicit offset. Bare
+datetimes in the ledger are interpreted against this. A booking may override
+it with its own offset (a booking in another city keeps that city's offset).
+
+```
+timezone:
+  # America/New_York
+```
+
+---
+
+## booking_types (EDIT THIS)
+
+Your `type` vocabulary — the values `type:` may take on a Booking. `/book`
+prompts from this list. Optionally give each a default duration so `/book`
+can fill `end` when the type implies a standard length. Defaults to `general`
+if you leave this empty.
+
+```
+booking_types:
+  # - call:        30m
+  # - meeting:     60m
+  # - visit:       (no default; set end explicitly)
+  # - appointment: 30m
+```
+
+---
+
+## reminder_policy (EDIT THIS)
+
+Default reminder lead time(s) and the channel/mechanism. The module records
+reminder *intent* only — it does **not** deliver notifications. `/remind`
+surfaces what's due per this policy; delivery (email, push, a cron job) is
+your project's concern, wired outside this module.
+
+```
+reminder_policy:
+  # default_lead: -1h        # offset resolved against the booking start
+  # channel:      (how a due reminder actually reaches someone — a pointer,
+  #                or "manual: /remind surfaces them, a human acts")
+```
+
+---
+
+## Examples — delete the ones you don't need
+
+> Pick the block that matches your operation, paste it above, and tune it.
+
+### Sales / customer-engagement
+
+```
+timezone: America/New_York
+working_hours: { days: Mon–Fri, start: 08:00, end: 18:00 }
+booking_types:
+  - call:    30m
+  - meeting: 60m
+  - demo:    45m
+reminder_policy: { default_lead: -1h, channel: "manual" }
+```
+
+### Field / site operations
+
+```
+timezone: America/Chicago
+working_hours: { days: Mon–Sat, start: 07:00, end: 16:00 }
+booking_types:
+  - visit:      (set end explicitly)
+  - inspection: 90m
+reminder_policy: { default_lead: -1d, channel: "manual" }
+```
+
+---
+
+## Note on co-mounted modules
+
+If `rasa.module.scheduler` is mounted, it is the **generation engine** — when
+you need availability solving, recurrence, or conflict resolution, that runs
+there and writes the resulting bookings into `schedule/SCHEDULE.md`. This gate
+still defines your calendar conventions; the scheduler reads them too.
+
+External calendar sync (Google / Outlook / ICS) is a **design-only**
+Connections (SA-031) concern — not configured here, not implemented by this
+module. The ledger is the local source of truth.

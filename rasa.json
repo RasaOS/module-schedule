@@ -1,0 +1,87 @@
+{
+  "$schema": "https://rasa-os.github.io/schema/rasa.schema.v1.json",
+  "contract_version": "1.3.0",
+  "name": "rasa.module.schedule",
+  "version": "0.1.0",
+  "kind": "module",
+  "aliases": [
+    "module-schedule"
+  ],
+  "description": "Portable lightweight scheduling + date management (bookings, appointments, reminders) as project-owned records -- the calendar face, not the generation engine (see rasa.module.scheduler).",
+  "source": {
+    "repo": "https://github.com/RasaOS/module-schedule",
+    "branch": "main"
+  },
+  "tier": "Pro",
+  "capabilities": [
+    "schedule.bookings",
+    "schedule.reminders",
+    "schedule.date-management",
+    "schedule.account-linkage"
+  ],
+  "permissions": [
+    "fs:read",
+    "fs:write"
+  ],
+  "requires": {
+    "parent_kind": [
+      "domain",
+      "orchestrator"
+    ]
+  },
+  "rasa": {
+    "role": "L1-mountable-capability",
+    "shape_pattern": "toolkit",
+    "note": "The bookings-as-records module: the calendar FACE, deliberately lightweight. It owns ONE record -- the Booking (id, account?, title, type, start, end, all_day, location, attendees, status, reminder, notes) -- in a project-owned git-versioned markdown ledger (schedule/SCHEDULE.md), with the lifecycle tentative -> confirmed -> done | cancelled (cancel-over-delete; the human confirms). The spine it ships is content/schedule-rules.md: the record, the lifecycle, the date-management discipline (absolute ISO-8601 timezone-qualified datetimes; relative dates resolved-at-capture-then-stored-absolute; duration = end - start), and the boundaries. The ONE thing that varies per project -- working hours, timezone, booking types, reminder policy -- lives in the project-owned .claude/schedule-gate.md seam (skip-if-exists). ACCOUNT SPINE: every Booking references its customer by the shared @acct-<slug> handle (optional here -- internal bookings omit it), the same handle leads/contracts/invoices/field-log use; the account's own record lives on the engagement hub RasaOS doesn't yet have (canon task SA-032), so this module seeds no accounts registry. CRITICAL BOUNDARY: this module owns the records, NOT the generation engine -- availability solving / recurrence / conflict resolution is rasa.module.scheduler (soft ref, present-if-mounted). External calendar sync (Google/Outlook/ICS) is a DESIGN-ONLY soft reference to Connections (canon task SA-031) and is NOT implemented here. Reminder delivery is out of scope -- the record holds reminder INTENT only. DEFERRED skills (extract-after-proof, gated on a real consumer declaring the module in requires.elements[]; NOT built in v0.1.0): /book (add/confirm a booking), /schedule (agenda view), /remind (due reminders). See content/BUILD_PLAN.md M-1..M-3. Shell precedent: module.notes."
+  },
+  "element": {
+    "description": "Element-owned files mirrored into the install target's .claude/ per canon ELEMENT_CONTRACT.md §7. Refreshed on Element upgrade. The schedule-gate seam and the live SCHEDULE ledger are NOT here -- they are project-owned (see seed.files).",
+    "files": [
+      {
+        "from": "content/schedule-rules.md",
+        "to": ".claude/schedule-rules.md",
+        "policy": "file-replace",
+        "note": "The portable bookings-as-records spine: the Booking record + its canonical field set, the tentative->confirmed->done|cancelled lifecycle, the shared @acct-<slug> account convention, the date-management discipline, and the scheduler/Connections boundaries. Element-owned; refreshed on upgrade. References .claude/schedule-gate.md for the per-project slice (hours/timezone/types/reminder policy); it hardcodes neither."
+      },
+      {
+        "from": "content/README.md",
+        "to": "content/README.md",
+        "policy": "opt-in",
+        "note": "Describes what this module ships and how it installs. Fork/author-time doc; not installed into consumer projects."
+      },
+      {
+        "from": "content/BUILD_PLAN.md",
+        "to": "content/BUILD_PLAN.md",
+        "policy": "opt-in",
+        "note": "The v0.1.0 specification + build plan (the Booking entity model, the lifecycle, the schedule-gate seam, the deferred /book /schedule /remind skills gated per extract-after-proof, the scheduler/SA-031/SA-032 boundaries, the honest-scope deferral). Author-time doc; not installed into consumer projects."
+      }
+    ]
+  },
+  "seed": {
+    "description": "One-time, project-owned files copied at install only (skip-if-exists), per canon ELEMENT_CONTRACT.md §7. These belong to the consuming project after install and are never overwritten on Element upgrade -- the project's schedule-gate adapter seam and its live booking ledger.",
+    "files": [
+      {
+        "from": "seed/schedule-gate.md.template",
+        "to": ".claude/schedule-gate.md",
+        "policy": "skip-if-exists",
+        "note": "The per-project adapter seam -- the ONE thing that varies per project: working hours, timezone, booking types (the type vocabulary + optional default durations), and reminder policy. Project-owned; the project fills it. /book reads the types + timezone; /remind honors the reminder policy. Ships with honest defaults + commented examples; placeholder-free per the documented skip-if-exists policy gap."
+      },
+      {
+        "from": "seed/schedule/SCHEDULE.md.template",
+        "to": "schedule/SCHEDULE.md",
+        "policy": "skip-if-exists",
+        "note": "The live booking ledger -- one entry per Booking, ordered by start, with the BKG-NNN id + lifecycle + legend. Project-owned; grows over the project's life. Cancel or mark done -- never delete. Placeholder-free per the documented skip-if-exists policy gap."
+      },
+      {
+        "from": "seed/rasa.lock.json.template",
+        "to": ".claude/rasa.lock.json",
+        "policy": "init-only-with-sha",
+        "note": "Stamped with the Element HEAD commit SHA at init time. Lockfile shape per canon Spec §6 (Connection Contract). When co-installed under a parent that also stamps a lockfile, the parent's is authoritative (single-writer-per-path). Substitutes {{ELEMENT_NAME}}, {{ELEMENT_KIND}}, {{ELEMENT_VERSION}}, {{ELEMENT_REPO}}, {{ELEMENT_BRANCH}}, {{ELEMENT_SHA}}, {{TODAY}} via bin/init."
+      }
+    ]
+  },
+  "scaffold": {
+    "description": "Empty directories created at init by the declarative installer.",
+    "directories": []
+  }
+}

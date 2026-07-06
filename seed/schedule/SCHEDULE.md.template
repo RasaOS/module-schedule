@@ -1,0 +1,53 @@
+# Schedule — bookings
+
+The project's live booking ledger, managed by `rasa.module.schedule`. One
+entry per booking, ordered by `start`. **Cancel or mark `done` — never
+delete;** the record that a booking existed is the point.
+
+`/book` appends and confirms; `/schedule` reads the agenda; `/remind`
+surfaces what's due. Read `.claude/schedule-rules.md` for the record fields,
+the lifecycle, and the date conventions, and `.claude/schedule-gate.md` for
+this project's timezone, types, and reminder policy.
+
+Lifecycle: `tentative → confirmed → done | cancelled`. Dates are absolute,
+ISO 8601, timezone-qualified. `BKG-NNN` is monotonic and never reused. The
+`account` handle (`@acct-<slug>`) is optional — omit it for internal
+bookings.
+
+---
+
+<!-- Newest activity near the top or ordered by start — your call, keep it scannable. Example shapes: -->
+
+## BKG-001 — (example) Kickoff call
+- **Account:** @acct-acme
+- **Type:** call
+- **Start:** 2026-07-08T14:00:00-04:00
+- **End:** 2026-07-08T14:30:00-04:00
+- **Location:** Zoom
+- **Attendees:** you, Acme (2)
+- **Status:** confirmed
+- **Reminder:** -1h
+- **Notes:** first call of the engagement.
+
+## BKG-002 — (example) Team standup
+- **Type:** meeting
+- **Start:** 2026-07-09T09:30:00-04:00
+- **All-day:** false
+- **Status:** tentative
+- **Notes:** internal — no account handle.
+
+<!-- Delete the examples above once you file your first real booking. -->
+
+## Legend
+
+- **id** `BKG-NNN` monotonic, never reused.
+- **account** `@acct-<slug>` — the shared customer handle; optional (internal
+  bookings omit it).
+- **type** — from `.claude/schedule-gate.md`'s `booking_types` (default
+  `general`).
+- **start / end** — ISO 8601, timezone-qualified. Omit `end` for `all_day` or
+  type-implied durations.
+- **all_day** — `true` ⇒ `start`/`end` are dates only.
+- **status** — `tentative | confirmed | done | cancelled`.
+- **reminder** — absolute datetime, or an offset (`-1h`, `-1d`) against
+  `start`. Intent only; the module does not deliver reminders.

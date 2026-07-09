@@ -2,7 +2,7 @@
   "$schema": "https://rasa-os.github.io/schema/rasa.schema.v1.json",
   "contract_version": "1.3.0",
   "name": "rasa.module.schedule",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "kind": "module",
   "aliases": [
     "module-schedule"
@@ -32,7 +32,13 @@
   "rasa": {
     "role": "L1-mountable-capability",
     "shape_pattern": "toolkit",
-    "note": "The bookings-as-records module: the calendar FACE, deliberately lightweight. It owns ONE record -- the Booking (id, account?, title, type, start, end, all_day, location, attendees, status, reminder, notes) -- in a project-owned git-versioned markdown ledger (schedule/SCHEDULE.md), with the lifecycle tentative -> confirmed -> done | cancelled (cancel-over-delete; the human confirms). The spine it ships is content/schedule-rules.md: the record, the lifecycle, the date-management discipline (absolute ISO-8601 timezone-qualified datetimes; relative dates resolved-at-capture-then-stored-absolute; duration = end - start), and the boundaries. The ONE thing that varies per project -- working hours, timezone, booking types, reminder policy -- lives in the project-owned .claude/schedule-gate.md seam (skip-if-exists). ACCOUNT SPINE: every Booking references its customer by the shared @acct-<slug> handle (optional here -- internal bookings omit it), the same handle leads/contracts/invoices/field-log use; the account's own record lives on the engagement hub RasaOS doesn't yet have (canon task SA-032), so this module seeds no accounts registry. CRITICAL BOUNDARY: this module owns the records, NOT the generation engine -- availability solving / recurrence / conflict resolution is rasa.module.scheduler (soft ref, present-if-mounted). External calendar sync (Google/Outlook/ICS) is a DESIGN-ONLY soft reference to Connections (canon task SA-031) and is NOT implemented here. Reminder delivery is out of scope -- the record holds reminder INTENT only. DEFERRED skills (extract-after-proof, gated on a real consumer declaring the module in requires.elements[]; NOT built in v0.1.0): /book (add/confirm a booking), /schedule (agenda view), /remind (due reminders). See content/BUILD_PLAN.md M-1..M-3. Shell precedent: module.notes."
+    "note": "The bookings-as-records module: the calendar FACE, deliberately lightweight. It owns ONE record -- the Booking (id, account?, title, type, start, end, all_day, location, attendees, status, reminder, notes) -- in a project-owned git-versioned markdown ledger (schedule/SCHEDULE.md), with the lifecycle tentative -> confirmed -> done | cancelled (cancel-over-delete; the human confirms). The spine it ships is content/schedule-rules.md: the record, the lifecycle, the date-management discipline (absolute ISO-8601 timezone-qualified datetimes; relative dates resolved-at-capture-then-stored-absolute; duration = end - start), and the boundaries. The ONE thing that varies per project -- working hours, timezone, booking types, reminder policy -- lives in the project-owned .claude/schedule-gate.md seam (skip-if-exists). ACCOUNT SPINE: every Booking references its customer by the shared @acct-<slug> handle (optional here -- internal bookings omit it), the same handle leads/contracts/invoices/field-log use; the account's own record lives on the engagement hub RasaOS doesn't yet have (canon task SA-032), so this module seeds no accounts registry. CRITICAL BOUNDARY: this module owns the records, NOT the generation engine -- availability solving / recurrence / conflict resolution is rasa.module.scheduler (soft ref, present-if-mounted). External calendar sync (Google/Outlook/ICS) is a DESIGN-ONLY soft reference to Connections (canon task SA-031) and is NOT implemented here. Reminder delivery is out of scope -- the record holds reminder INTENT only. DEFERRED skills (extract-after-proof, gated on a real consumer declaring the module in requires.elements[]; NOT built in v0.1.0): /book (add/confirm a booking), /schedule (agenda view), /remind (due reminders). See content/BUILD_PLAN.md M-1..M-3. Shell precedent: module.notes.",
+    "identity": {
+      "one_liner": "the RasaOS module for scheduling",
+      "role": "module",
+      "subject": "scheduling",
+      "goal": "bring scheduling into a project as an installable RasaOS module"
+    }
   },
   "element": {
     "description": "Element-owned files mirrored into the install target's .claude/ per canon ELEMENT_CONTRACT.md §7. Refreshed on Element upgrade. The schedule-gate seam and the live SCHEDULE ledger are NOT here -- they are project-owned (see seed.files).",
@@ -95,6 +101,12 @@
         "to": ".claude/rasa.lock.json",
         "policy": "init-only-with-sha",
         "note": "Stamped with the Element HEAD commit SHA at init time. Lockfile shape per canon Spec §6 (Connection Contract). When co-installed under a parent that also stamps a lockfile, the parent's is authoritative (single-writer-per-path). Substitutes {{ELEMENT_NAME}}, {{ELEMENT_KIND}}, {{ELEMENT_VERSION}}, {{ELEMENT_REPO}}, {{ELEMENT_BRANCH}}, {{ELEMENT_SHA}}, {{TODAY}} via bin/init."
+      },
+      {
+        "from": "seed/rasa-deployment.md.template",
+        "to": ".claude/rasa-deployment.md",
+        "policy": "skip-if-exists",
+        "note": "The DEPLOYMENT identity layer (SA-025) — project-owned; what this project is, for whom, on what platform. bin/init generates the element layer (.claude/rasa-identity.md) from rasa.identity every install."
       }
     ]
   },

@@ -1,5 +1,8 @@
 # CLAUDE.md — `rasa.module.schedule`
 
+> **Who you are (SA-025).** `rasa.module.schedule` — the RasaOS module for scheduling. Substrate: **RasaOS**; role: **module**. On install `bin/init` renders this into `.claude/rasa-identity.md`; `/whoami` composes the full identity with the project's deployment layer.
+
+
 Per-repo working contract for Claude sessions opened inside this folder.
 Extends `~/.claude/CLAUDE.md` and the workspace `~/rAI/rasa-os/CLAUDE.md`
 (the `rasa.tenant.rasaos` tenant's contract); does not override them.
